@@ -5,6 +5,7 @@ from app.api.health import router as health_router
 from app.api.admin import router as admin_router
 from app.api.locations import router as locations_router
 from app.api.dashboard import router as dashboard_router
+from app.api.summary import router as summary_router
 
 from app.core.config import settings
 
@@ -22,3 +23,4 @@ app.include_router(health_router)
 app.include_router(admin_router)
 app.include_router(locations_router)
 app.include_router(dashboard_router)
+app.include_router(summary_router)

@@ -42,6 +42,17 @@ export type DashboardResponse={
   };
 };
 
+export type BadDaysRow = {
+  location_id: number;
+  name: string;
+  state?: string | null;
+  bad_days: number;
+  max_pm25: number | null;
+  window_days: number;
+}
+
+export type BadDayTrendRow= {day:string;bad_day:number; pm25_max:number|null};
+
 export async function getHealth() {
   try {
     const res = await fetch(`${API_URL}/healthz`);
@@ -77,4 +88,16 @@ export async function getDashboard(locationId:number,hours: number, bad_threshol
   const res = await fetch(`${API_URL}/dashboard/location/${locationId}?hours=${hours}&bad_threshold=${bad_threshold}`);
   if (!res.ok) throw new Error(`Dashboard failed: ${res.status}`);
   return (await res.json()) as DashboardResponse;
+}
+
+export async function getBadDays(days = 30){
+  const res = await fetch(`${API_URL}/summary/bad-days?days=${days}`);
+  if(!res.ok) throw new Error(`Bad-Days failed: ${res.status}`);
+  return( await res.json()) as BadDaysRow[];
+}
+
+export async function getBadDaysTrend(locationId:number,days = 90){
+  const res = await fetch(`${API_URL}/summary/bad-days-trend?location_id=${locationId}&days=${days}`);
+  if(!res.ok) throw new Error(`Trend failed: ${res.status}`);
+  return( await res.json()) as BadDayTrendRow[];
 }

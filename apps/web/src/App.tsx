@@ -1,6 +1,7 @@
 import { Route,Routes,Link } from "react-router-dom";
 import Home from "./pages/Home";
 import LocationDashboard from "./pages/LocationDashboard";
+import Summary from "./pages/Summary";
 
 export default function App(){
   return(
@@ -8,10 +9,12 @@ export default function App(){
   <header style={{display:"flex", gap: 12, marginBottom: 16}}>
     <Link to="/">Home</Link>
     <Link to="/location">Location (placeholder)</Link>
+    <Link to="/summary">Summary</Link>
   </header>
   <Routes>
     <Route path="/" element={<Home/>}/>
     <Route path="/location/:id" element={<LocationDashboard/>}/>
+    <Route path="/summary" element = {<Summary/>}/>
   </Routes>
 </div>
   );
