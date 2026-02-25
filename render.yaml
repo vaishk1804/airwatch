@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: airwatch-api
+    env: docker
+    dockerfilePath: apps/api/DockerFile
+    dockerContext: apps/api
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHONPATH
+        value: /app
+      - key: PORT
+        value: "8000"
+    startCommand: >
+      sh -c "python app/scripts/migrate.py && uvicorn app.main:app"
+
+  - type: worker
+    name: airwatch_worker
+    env: docker
+    dockerfilePath: apps/api/DockerFile
+    dockerContext: apps/api
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHONPATH
+        value: /app
+    startCommand: celery -A app.worker.celery_app beat -l INFO

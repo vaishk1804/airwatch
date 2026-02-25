@@ -101,3 +101,19 @@ export async function getBadDaysTrend(locationId:number,days = 90){
   if(!res.ok) throw new Error(`Trend failed: ${res.status}`);
   return( await res.json()) as BadDayTrendRow[];
 }
+
+export async function subscribe(email:string,location_id:number,threshold:number){
+  const res = await fetch(`${API_URL}/subscriptions`,{
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({email,location_id,threshold}),
+  });
+  if (!res.ok) throw new Error(`subscribe failed: ${res.status}`);
+  return res.json();
+}
+
+export async function listSubscriptions(email:string){
+  const res = await fetch(`${API_URL}/subscriptions?email=${encodeURIComponent(email)}`);
+  if(!res.ok) throw new Error(`list subs failed: ${res.status}`);
+  return res.json() as Promise<{id:number;email:string;location_id:number;threshold:number;is_active:boolean}[]>;
+}

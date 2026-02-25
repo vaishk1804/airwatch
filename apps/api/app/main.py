@@ -6,6 +6,7 @@ from app.api.admin import router as admin_router
 from app.api.locations import router as locations_router
 from app.api.dashboard import router as dashboard_router
 from app.api.summary import router as summary_router
+from app.api.subscriptions import router as subs_router
 
 from app.core.config import settings
 
@@ -24,3 +25,4 @@ app.include_router(admin_router)
 app.include_router(locations_router)
 app.include_router(dashboard_router)
 app.include_router(summary_router)
+app.include_router(subs_router)

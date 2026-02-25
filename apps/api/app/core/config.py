@@ -32,5 +32,10 @@ class Settings(BaseSettings):
     OPENAQ_API_KEY: str = ""
     OPENMETEO_BASE: str = "https://api.open-meteo.com/v1"
 
+    SMTP_HOST:str = ""
+    SMTP_PORT:int = 587
+    SMTP_USER:str=""
+    SMTP_PASS:str=""
+    SMTP_FROM:str = "AirWatch <no-reply@airwatch>"
 
 settings = Settings()

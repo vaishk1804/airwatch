@@ -17,5 +17,36 @@ services:
     ports:
       - "6379:6379"
 
+  api:
+    build: ../apps/api
+    container_name: airwatch_api
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: ../apps/api
+    container_name: airwatch_worker
+    env_file:
+      - ../.env
+    command: celery -A app.worker.celery_app worker -l INFO
+    depends_on:
+      - postgres
+      - redis
+
+  beat:
+    build: ../apps/api
+    container_name: airwatch_beat
+    env_file:
+      - ../.env
+    command: celery -A app.worker.celery_app beat -l INFO
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   airwatch_pgdata:
