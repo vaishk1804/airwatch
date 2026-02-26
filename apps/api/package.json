@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "httpx": "^3.0.1",
+    "pytest": "^1.0.0",
+    "ruff": "^1.5.4"
+  }
+}

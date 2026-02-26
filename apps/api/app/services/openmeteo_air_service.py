@@ -1,4 +1,5 @@
 from datetime import datetime,timezone
+
 from typing import Any
 
 def normalize_pm25_hourly(payload:dict[str,Any]):
@@ -13,6 +14,6 @@ def normalize_pm25_hourly(payload:dict[str,Any]):
     v=vals[i]
     if v is None:
       continue
-    dt=datetime.fromisoformat(t).replace(tzinfo=timezone.utc)
+    dt=datetime.fromisoformat(t).replace(tzinfo=datetime.utc)
     out.append({"t":dt.isoformat(),"v":float(v),"unit":"µg/m³"})
   return out

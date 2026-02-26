@@ -1,4 +1,5 @@
 from datetime import datetime , timezone
+
 from typing import Any
 
 def normalize_weather_hourly(payload: dict[str,Any]):
@@ -10,7 +11,7 @@ def normalize_weather_hourly(payload: dict[str,Any]):
 
   out =[]
   for i,t in enumerate(times):
-    dt = datetime.fromisoformat(t).replace(tzinfo=timezone.utc)
+    dt = datetime.fromisoformat(t).replace(tzinfo=datetime.utc)
     out.append({
       "t":dt.isoformat(),
       "temp_c": temps[i] if i<len(temps) else None,
