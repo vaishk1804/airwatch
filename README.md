@@ -115,7 +115,7 @@ Create a `.env` file based on `.env.example`.
 - Creating a frontend foundation for a production-style dashboard
 - Practicing environment-based configuration across frontend and backend services
 
-## Recruiter-Friendly Highlights
+## Highlights
 
 - Built a full-stack application using React, TypeScript, FastAPI, PostgreSQL, Redis, and Docker
 - Integrated third-party environmental APIs into a backend service layer
