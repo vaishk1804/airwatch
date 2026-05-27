@@ -180,7 +180,3 @@ Single-process uvicorn, SQLite. Full numbers and method in
 - AQI conversion (currently raw µg/m³)
 - OpenTelemetry traces for the ingest pipeline
 - Backfill CLI for historical reanalysis windows
-
-## License
-
-MIT
