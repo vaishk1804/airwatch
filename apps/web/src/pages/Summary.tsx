@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getBadDays, getBadDaysTrend, getLocationsMap } from "../lib/api";
-import LocationsMap from "../components/LocationsMap";
+import { getBadDays, getBadDaysTrend } from "../lib/api";
 import {
   ResponsiveContainer,
   BarChart,
@@ -18,12 +17,6 @@ import {
 export default function Summary() {
   const [windowDays, setWindowDays] = useState<30 | 90>(30);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-
-  const mapPoints = useQuery({
-    queryKey: ["locationsMap"],
-    queryFn: getLocationsMap,
-    refetchInterval: 60_000, // refresh every minute so the colors stay live
-  });
 
   const leaderboard = useQuery({
     queryKey: ["badDays", windowDays],
@@ -43,57 +36,7 @@ export default function Summary() {
       <Link to="/" className="back-link">← Back</Link>
       <div className="section-title">
         <h1>Executive summary</h1>
-        <span className="muted">Network status at a glance</span>
-      </div>
-
-      {/* Map: monitored locations colored by current AQI */}
-      <div className="section-title"><h3>Network map</h3></div>
-      {mapPoints.isLoading && <p className="muted">Loading map...</p>}
-      {mapPoints.isError && <p style={{ color: "var(--bad)" }}>Failed to load map data.</p>}
-      {mapPoints.data && <LocationsMap points={mapPoints.data} />}
-
-      {/* Inline AQI legend so the map's colors are self-explanatory */}
-      {mapPoints.data && mapPoints.data.length > 0 && (
-        <div
-          className="row"
-          style={{
-            justifyContent: "center",
-            gap: 16,
-            marginTop: 8,
-            fontSize: 12,
-            color: "var(--fg-muted)",
-            flexWrap: "wrap",
-          }}
-        >
-          {[
-            { band: "Good", color: "#00e400" },
-            { band: "Moderate", color: "#ffff00" },
-            { band: "USG", color: "#ff7e00" },
-            { band: "Unhealthy", color: "#ff0000" },
-            { band: "Very Unhealthy", color: "#8f3f97" },
-            { band: "Hazardous", color: "#7e0023" },
-            { band: "No data", color: "#888888" },
-          ].map((b) => (
-            <span key={b.band} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: b.color,
-                  display: "inline-block",
-                  border: "1px solid rgba(0,0,0,0.15)",
-                }}
-              />
-              {b.band}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="section-title" style={{ marginTop: 32 }}>
-        <h3>Bad-air days leaderboard</h3>
-        <span className="muted">Ranked by days over threshold</span>
+        <span className="muted">Ranked by bad-air days</span>
       </div>
 
       <div className="toolbar">
@@ -118,6 +61,7 @@ export default function Summary() {
 
       {leaderboard.data && (
         <>
+          <div className="section-title"><h3>Bad-air days by location</h3></div>
           <div className="card" style={{ height: 280 }}>
             <ResponsiveContainer>
               <BarChart data={top}>

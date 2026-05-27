@@ -48,15 +48,15 @@ flow, and job schedule.
 
 ## Stack
 
-| Layer      | What's in it                                                    |
-| ---------- | --------------------------------------------------------------- |
-| Frontend   | React 19, TypeScript, Vite, TanStack Query, Recharts            |
-| API        | FastAPI, Pydantic v2, uvicorn                                   |
-| Async work | Celery worker + beat, Redis broker                              |
-| Data       | PostgreSQL 16, SQLAlchemy 2 (typed mappers), Alembic migrations |
-| External   | OpenAQ v3, Open-Meteo (forecast + air-quality)                  |
-| Infra      | Docker Compose for local, Render blueprint for deploy           |
-| Quality    | pytest (27 tests), ruff, GitHub Actions, async load test        |
+| Layer        | What's in it                                                    |
+| ------------ | --------------------------------------------------------------- |
+| Frontend     | React 19, TypeScript, Vite, TanStack Query, Recharts            |
+| API          | FastAPI, Pydantic v2, uvicorn                                   |
+| Async work   | Celery worker + beat, Redis broker                              |
+| Data         | PostgreSQL 16, SQLAlchemy 2 (typed mappers), Alembic migrations |
+| External     | OpenAQ v3, Open-Meteo (forecast + air-quality)                  |
+| Infra        | Docker Compose for local, Render blueprint for deploy           |
+| Quality      | pytest (27 tests), ruff, GitHub Actions, async load test        |
 
 ## Quickstart
 
@@ -145,14 +145,14 @@ path. `/admin/alerts/send` returns a task ID; the worker does the work.
 make check        # ruff + pytest + tsc -b
 ```
 
-| Gate         | Tool                | Where                                         |
-| ------------ | ------------------- | --------------------------------------------- |
-| Lint         | ruff                | `pyproject.toml` config, runs in `api-ci.yml` |
-| Unit tests   | pytest              | 27 tests across services, normalizers, API    |
-| Integration  | TestClient + SQLite | Real route handlers, real DB constraints      |
-| Type-check   | `tsc -b`            | Runs in `web-ci.yml`                          |
-| Docker build | `docker build`      | Runs in `api-ci.yml`                          |
-| Load test    | httpx + asyncio     | `make loadtest`, ad-hoc                       |
+| Gate           | Tool             | Where                                          |
+| -------------- | ---------------- | ---------------------------------------------- |
+| Lint           | ruff             | `pyproject.toml` config, runs in `api-ci.yml`  |
+| Unit tests     | pytest           | 27 tests across services, normalizers, API     |
+| Integration    | TestClient + SQLite | Real route handlers, real DB constraints   |
+| Type-check     | `tsc -b`         | Runs in `web-ci.yml`                           |
+| Docker build   | `docker build`   | Runs in `api-ci.yml`                           |
+| Load test      | httpx + asyncio  | `make loadtest`, ad-hoc                        |
 
 ## Load test snapshot
 
