@@ -1,23 +1,53 @@
+type Tone = "neutral" | "good" | "warn" | "bad";
+
 export default function KPI({
   label,
   value,
   sub,
-}:{
-  label:string;
-  value:string;
-  sub?:string;
-}){
-  return(
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: Tone;
+}) {
+  const accentColor: Record<Tone, string> = {
+    neutral: "var(--accent)",
+    good: "var(--good)",
+    warn: "var(--warn)",
+    bad: "var(--bad)",
+  };
+
+  return (
     <div
-    style={{
-      border:"1px solid #ddd",
-      borderRadius:12,
-      padding:12,
-      minWidth:160,
-    }}>
-      <div style={{fontSize:12,opacity:0.7}}>{label}</div>
-      <div style={{ fontSize:22,fontWeight:600,marginTop:6}}>{value}</div>
-      {sub && <div style={{fontSize:12,opacity:0.7,marginTop:4}}>{sub}</div>}
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-lg)",
+        borderLeft: `3px solid ${accentColor[tone]}`,
+        padding: 14,
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          color: "var(--fg-muted)",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 700, marginTop: 6, color: "var(--fg)" }}>
+        {value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }

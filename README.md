@@ -1,137 +1,186 @@
-# AirWatch — Air Quality & Weather Intelligence Dashboard
+# AirWatch
 
-AirWatch is a full-stack environmental data application that combines air-quality and weather data into a searchable dashboard for exploring local environmental conditions.
+> Production-style air quality monitoring platform. Hourly PM2.5 from OpenAQ
+> merged with Open-Meteo weather, aggregated nightly into a leaderboard,
+> with email alerts when subscribed locations cross a PM2.5 threshold.
 
-The project demonstrates an end-to-end software and data engineering workflow: external API ingestion, backend service design, relational storage, frontend visualization, and Docker-based local development.
+[![API CI](https://github.com/vaishk1804/airwatch/actions/workflows/api-ci.yml/badge.svg)](https://github.com/vaishk1804/airwatch/actions/workflows/api-ci.yml)
+[![Web CI](https://github.com/vaishk1804/airwatch/actions/workflows/web-ci.yml/badge.svg)](https://github.com/vaishk1804/airwatch/actions/workflows/web-ci.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![TypeScript](https://img.shields.io/badge/typescript-5.9-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## Why I Built This
+---
 
-Air-quality and weather data are often available through separate APIs, which makes it harder to understand local environmental conditions in one place. AirWatch brings these signals together so users can search by location and view environmental context through a single application.
+## What it does
 
-## Features
-
-- Search and view air-quality and weather information by location
-- Backend API for health checks, readiness checks, and data access
-- PostgreSQL-backed data model for storing environmental records
-- Redis-ready infrastructure for caching and background-job workflows
-- React + TypeScript frontend for dashboard-style exploration
-- Docker Compose setup for local PostgreSQL and Redis services
-- Environment-based configuration for API keys, database URLs, and CORS
-
-## Tech Stack
-
-**Frontend:** React, TypeScript, Vite  
-**Backend:** Python, FastAPI, Pydantic Settings, SQLAlchemy  
-**Database:** PostgreSQL  
-**Infrastructure:** Docker, Docker Compose, Redis  
-**Data Sources:** OpenAQ, Open-Meteo  
-**Tools:** Alembic, Uvicorn, Git, Postman
+- **Ingests** hourly PM2.5 from OpenAQ v3 (with Open-Meteo air-quality as fallback) and hourly weather from Open-Meteo for every configured location
+- **Aggregates** the hourly stream into daily metrics (`pm25_avg`, `pm25_max`, `bad_hours`, `bad_day`) on a Celery schedule
+- **Serves** per-location dashboards (PM2.5 + weather time series, correlation analysis) and an executive summary with a bad-air-days leaderboard
+- **Alerts** subscribers by email when their location has a "bad day"
 
 ## Architecture
 
-    User
-      ↓
-    React + TypeScript Frontend
-      ↓
-    FastAPI Backend
-      ↓
-    Service Layer / API Clients
-      ↓
-    PostgreSQL + Redis
-      ↓
-    OpenAQ + Open-Meteo APIs
+```mermaid
+flowchart LR
+    User[Browser] -->|HTTP| Web[React + Vite]
+    Web -->|REST| API[FastAPI]
 
-## Repository Structure
+    subgraph Backend[Python backend]
+        API
+        Beat[Celery beat]
+        Worker[Celery worker]
+    end
 
-    airwatch/
-    ├── backend/              # FastAPI application
-    ├── web/                  # React + TypeScript frontend
-    ├── docker-compose.yml    # Local PostgreSQL and Redis services
-    ├── .env.example          # Example environment variables
-    └── README.md
+    API <-->|SQLAlchemy| PG[(PostgreSQL)]
+    Worker <-->|SQLAlchemy| PG
+    Beat -->|enqueue| Redis[(Redis)]
+    Redis -->|consume| Worker
 
-## Backend Setup
+    Worker -->|hourly| OpenAQ[OpenAQ v3]
+    Worker -->|hourly| Meteo[Open-Meteo]
+    Worker -->|daily digest| SMTP[SMTP]
+```
 
-    cd backend
-    python -m venv .venv
-    .venv\Scripts\activate   # Windows
-    pip install -r requirements.txt
-    python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+Three processes off the same Docker image: `api`, `worker`, `beat`. Read
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the data model, request
+flow, and job schedule.
 
-Useful backend checks:
+## Stack
 
-    GET /healthz
-    GET /readyz
+| Layer      | What's in it                                                    |
+| ---------- | --------------------------------------------------------------- |
+| Frontend   | React 19, TypeScript, Vite, TanStack Query, Recharts            |
+| API        | FastAPI, Pydantic v2, uvicorn                                   |
+| Async work | Celery worker + beat, Redis broker                              |
+| Data       | PostgreSQL 16, SQLAlchemy 2 (typed mappers), Alembic migrations |
+| External   | OpenAQ v3, Open-Meteo (forecast + air-quality)                  |
+| Infra      | Docker Compose for local, Render blueprint for deploy           |
+| Quality    | pytest (27 tests), ruff, GitHub Actions, async load test        |
 
-## Frontend Setup
+## Quickstart
 
-    cd web
-    npm install
-    npm run dev
+```bash
+# 1. Bring up Postgres, Redis, API, worker, and beat
+make up
 
-Create a frontend environment file if needed:
+# 2. Apply migrations and seed locations
+make migrate
+make seed
 
-    VITE_API_URL=http://localhost:8000
+# 3. Trigger the first ingest run (otherwise dashboards are empty)
+make ingest
 
-## Docker Setup
+# 4. Run the frontend
+cd apps/web && npm install && npm run dev
+# → http://localhost:5173
+```
 
-    docker compose up -d
+Required env vars are documented in [`.env.example`](./.env.example). Only
+`DATABASE_URL` and `REDIS_URL` are required to start; `OPENAQ_API_KEY` and
+SMTP creds are optional.
 
-Expected local services:
+## Project layout
 
-    PostgreSQL: localhost:5432
-    Redis: localhost:6379
-    Backend: localhost:8000
-    Frontend: localhost:5173
+```
+.
+├── apps/
+│   ├── api/                    # FastAPI + Celery
+│   │   ├── app/
+│   │   │   ├── api/            # HTTP route handlers
+│   │   │   ├── clients/        # OpenAQ + Open-Meteo HTTP clients
+│   │   │   ├── core/           # Settings (pydantic-settings)
+│   │   │   ├── db/             # Engine, Base, session
+│   │   │   ├── jobs/           # Long-running pipeline jobs
+│   │   │   ├── models/         # SQLAlchemy ORM models
+│   │   │   ├── repositories/   # Pure SQL access functions
+│   │   │   ├── services/       # Pure-Python domain logic
+│   │   │   ├── scripts/        # CLI: migrate, seed, loadtest
+│   │   │   ├── tasks.py        # Celery task definitions
+│   │   │   ├── worker.py       # Celery app + beat schedule
+│   │   │   └── main.py         # FastAPI entrypoint
+│   │   ├── alembic/            # DB migrations
+│   │   └── tests/              # pytest (unit + integration)
+│   └── web/                    # React + Vite + TypeScript
+│       └── src/
+│           ├── components/     # KPI, charts, scatter plot
+│           ├── lib/api.ts      # Typed API client
+│           ├── pages/          # Home, LocationDashboard, Summary, Subscriptions
+│           └── types/
+├── docs/
+│   ├── ARCHITECTURE.md
+│   └── LOAD_TEST_RESULTS.md
+├── infra/
+│   └── docker-compose.yml
+├── .github/workflows/          # API CI, Web CI
+├── Makefile                    # `make help` for all targets
+└── render.yaml                 # Render blueprint
+```
 
-## Environment Variables
+## Design choices worth flagging
 
-Create a `.env` file based on `.env.example`.
+**Dashboard reads stay in Postgres.** The first cut of `/dashboard/location/{id}`
+called Open-Meteo synchronously. Under 50 concurrent clients that produced
+**63 RPS with a 74% error rate** because Open-Meteo rate-limited and 403s
+propagated as 500s. Moving weather reads to a Celery-populated `weather_hourly`
+table got it to **230 RPS at 0% errors** ([numbers](./docs/LOAD_TEST_RESULTS.md)).
+The cold-start path falls back to a one-shot live fetch so a fresh deploy
+isn't blank.
 
-    API_HOST=0.0.0.0
-    API_PORT=8000
+**Idempotent ingest.** Both `aq_measurements` and `weather_hourly` have unique
+constraints on `(location_id, timestamp_utc, ...)` and the writer uses
+Postgres `INSERT ... ON CONFLICT DO NOTHING`. Re-running an ingest never
+double-counts.
 
-    POSTGRES_HOST=localhost
-    POSTGRES_PORT=5432
-    POSTGRES_DB=airwatch
-    POSTGRES_USER=airwatch
-    POSTGRES_PASSWORD=your_password
-    DATABASE_URL=postgresql+psycopg://airwatch:your_password@localhost:5432/airwatch
+**Typed mappers.** All models use SQLAlchemy 2's `Mapped[T]` syntax. The web
+layer mirrors that with TypeScript types matched to the JSON shape, so
+breaking changes show up at compile time.
 
-    REDIS_URL=redis://localhost:6379/0
+**No tasks-in-API.** The HTTP layer never enqueues from a synchronous code
+path. `/admin/alerts/send` returns a task ID; the worker does the work.
 
-    CORS_ORIGINS=http://localhost:5173
+## Quality gates
 
-    OPENAQ_API_BASE=https://api.openaq.org
-    OPENAQ_API_KEY=your_openaq_key
-    OPENMETEO_BASE=https://api.open-meteo.com
+```bash
+make check        # ruff + pytest + tsc -b
+```
 
-## What I Focused On
+| Gate         | Tool                | Where                                         |
+| ------------ | ------------------- | --------------------------------------------- |
+| Lint         | ruff                | `pyproject.toml` config, runs in `api-ci.yml` |
+| Unit tests   | pytest              | 27 tests across services, normalizers, API    |
+| Integration  | TestClient + SQLite | Real route handlers, real DB constraints      |
+| Type-check   | `tsc -b`            | Runs in `web-ci.yml`                          |
+| Docker build | `docker build`      | Runs in `api-ci.yml`                          |
+| Load test    | httpx + asyncio     | `make loadtest`, ad-hoc                       |
 
-- Designing a clean full-stack project structure
-- Connecting external environmental APIs to a backend service layer
-- Managing local development with Dockerized PostgreSQL and Redis
-- Building backend health and readiness checks for deployability
-- Creating a frontend foundation for a production-style dashboard
-- Practicing environment-based configuration across frontend and backend services
+## Load test snapshot
 
-## Highlights
+```
+$ make loadtest
+Concurrency: 50  | Requests: 1000 | Wall: 5.04s | Throughput: 198 req/s
+p50 = 124ms   p95 = 418ms   p99 = 1167ms   errors: 0
+```
 
-- Built a full-stack application using React, TypeScript, FastAPI, PostgreSQL, Redis, and Docker
-- Integrated third-party environmental APIs into a backend service layer
-- Used health and readiness endpoints to support deployment-style backend validation
-- Structured the app with separate frontend, backend, database, and infrastructure concerns
-- Designed the project around a real-world data product use case: air quality and weather intelligence
+Pushed harder:
 
-## Future Improvements
+```
+$ make loadtest C=100 N=50
+Concurrency: 100 | Requests: 5000 | Wall: 21.72s | Throughput: 230 req/s
+p50 = 255ms   p95 = 736ms   p99 = 1603ms   errors: 0
+```
 
-- Add scheduled ingestion jobs for historical air-quality records
-- Add charts for pollutant trends and weather overlays
-- Add geospatial filtering and map-based exploration
-- Deploy frontend and backend with production environment variables
-- Add automated tests for API routes, services, and frontend components
-- Add screenshots and a short demo GIF to the README
+Single-process uvicorn, SQLite. Full numbers and method in
+[`docs/LOAD_TEST_RESULTS.md`](./docs/LOAD_TEST_RESULTS.md).
 
-## Status
+## Roadmap
 
-Active portfolio project. Built as a full-stack environmental data platform to demonstrate backend engineering, data ingestion, database design, Docker-based development, and frontend dashboard development.
+- Postgres-backed cache for OpenAQ sensor lookups (currently in-memory dict, lost on restart)
+- WebSocket push for live PM2.5 updates instead of polling
+- AQI conversion (currently raw µg/m³)
+- OpenTelemetry traces for the ingest pipeline
+- Backfill CLI for historical reanalysis windows
+
+## License
+
+MIT

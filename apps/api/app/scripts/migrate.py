@@ -1,6 +1,8 @@
+from pathlib import Path
+
 from alembic import command
 from alembic.config import Config
-from pathlib import Path
+
 
 def run():
   root=Path(__file__).resolve().parents[3]

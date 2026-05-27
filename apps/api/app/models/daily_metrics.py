@@ -1,8 +1,10 @@
-from sqlalchemy import ForeignKey,Date, Float, Integer, UniqueConstraint, Index
-from sqlalchemy.orm import Mapped, mapped_column
 from datetime import date
 
+from sqlalchemy import Date, Float, ForeignKey, Index, Integer, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
 from app.db.base import Base
+
 
 class DailyMetrics(Base):
   __tablename__ = "daily_metrics"

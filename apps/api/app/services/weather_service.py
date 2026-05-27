@@ -1,21 +1,28 @@
-from datetime import datetime , timezone
-
+from datetime import UTC, datetime
 from typing import Any
 
-def normalize_weather_hourly(payload: dict[str,Any]):
-  h=payload.get("hourly") or {}
-  times = h.get("time") or []
-  temps=h.get("temperature_2m") or []
-  hums=h.get("relative_humidity_2m") or []
-  winds = h.get("wind_speed_10m") or []
 
-  out =[]
-  for i,t in enumerate(times):
-    dt = datetime.fromisoformat(t).replace(tzinfo=datetime.utc)
-    out.append({
-      "t":dt.isoformat(),
-      "temp_c": temps[i] if i<len(temps) else None,
-      "rh": hums[i] if i<len(hums) else None,
-      "wind_kmh": winds[i] if i<len(winds) else None,
-    })
-  return out
+def normalize_weather_hourly(payload: dict[str, Any]):
+    """
+    Open-Meteo returns hourly arrays in `payload["hourly"]`.
+    We zip them into a list of {t, temp_c, rh, wind_kmh}.
+
+    Open-Meteo timestamps are naive ISO strings in the requested timezone
+    (we request UTC), so we attach tzinfo=UTC.
+    """
+    h = payload.get("hourly") or {}
+    times = h.get("time") or []
+    temps = h.get("temperature_2m") or []
+    hums = h.get("relative_humidity_2m") or []
+    winds = h.get("wind_speed_10m") or []
+
+    out = []
+    for i, t in enumerate(times):
+        dt = datetime.fromisoformat(t).replace(tzinfo=UTC)
+        out.append({
+            "t": dt.isoformat(),
+            "temp_c": temps[i] if i < len(temps) else None,
+            "rh": hums[i] if i < len(hums) else None,
+            "wind_kmh": winds[i] if i < len(winds) else None,
+        })
+    return out

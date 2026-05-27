@@ -1,5 +1,7 @@
+from datetime import datetime
+
 import httpx
-from datetime import datetime, timedelta, timezone
+
 from app.core.config import settings
 
 _CACHE = {}

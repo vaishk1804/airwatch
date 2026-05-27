@@ -1,89 +1,203 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getBadDays, getBadDaysTrend } from "../lib/api";
-import { ResponsiveContainer,BarChart,Bar,XAxis,YAxis,Tooltip,LineChart,Line } from "recharts";
+import { getBadDays, getBadDaysTrend, getLocationsMap } from "../lib/api";
+import LocationsMap from "../components/LocationsMap";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  LineChart,
+  Line,
+  CartesianGrid,
+} from "recharts";
 
-export default function Summary(){
-  const [windowDays,setWindowDays]=useState<30|90>(30)
-  const [selectedId,setSelectedId] = useState<number|null>(null);
+export default function Summary() {
+  const [windowDays, setWindowDays] = useState<30 | 90>(30);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const mapPoints = useQuery({
+    queryKey: ["locationsMap"],
+    queryFn: getLocationsMap,
+    refetchInterval: 60_000, // refresh every minute so the colors stay live
+  });
 
   const leaderboard = useQuery({
-    queryKey:["badDays",windowDays],
-    queryFn:()=> getBadDays(windowDays),
+    queryKey: ["badDays", windowDays],
+    queryFn: () => getBadDays(windowDays),
   });
 
   const trend = useQuery({
-    queryKey:["badDaysTrend",selectedId],
-    queryFn:()=>getBadDaysTrend(selectedId!,90),
-    enabled:selectedId!=null,
+    queryKey: ["badDaysTrend", selectedId],
+    queryFn: () => getBadDaysTrend(selectedId!, 90),
+    enabled: selectedId != null,
   });
-  const top = leaderboard.data?.slice(0,8)?? []
 
-  return(
+  const top = leaderboard.data?.slice(0, 8) ?? [];
+
+  return (
     <div>
-      <Link to="/">Back</Link>
-      <h2> Executive Summary</h2>
-
-      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
-        <button onClick={() => setWindowDays(30)} disabled={windowDays === 30}>Last 30d</button>
-        <button onClick={() => setWindowDays(90)} disabled={windowDays === 90}>Last 90d</button>
+      <Link to="/" className="back-link">← Back</Link>
+      <div className="section-title">
+        <h1>Executive summary</h1>
+        <span className="muted">Network status at a glance</span>
       </div>
 
-      {leaderboard.isLoading && <p>Loading summary...</p>}
-      {leaderboard.isError && <p style={{ color: "crimson" }}>Failed to load summary</p>}
+      {/* Map: monitored locations colored by current AQI */}
+      <div className="section-title"><h3>Network map</h3></div>
+      {mapPoints.isLoading && <p className="muted">Loading map...</p>}
+      {mapPoints.isError && <p style={{ color: "var(--bad)" }}>Failed to load map data.</p>}
+      {mapPoints.data && <LocationsMap points={mapPoints.data} />}
+
+      {/* Inline AQI legend so the map's colors are self-explanatory */}
+      {mapPoints.data && mapPoints.data.length > 0 && (
+        <div
+          className="row"
+          style={{
+            justifyContent: "center",
+            gap: 16,
+            marginTop: 8,
+            fontSize: 12,
+            color: "var(--fg-muted)",
+            flexWrap: "wrap",
+          }}
+        >
+          {[
+            { band: "Good", color: "#00e400" },
+            { band: "Moderate", color: "#ffff00" },
+            { band: "USG", color: "#ff7e00" },
+            { band: "Unhealthy", color: "#ff0000" },
+            { band: "Very Unhealthy", color: "#8f3f97" },
+            { band: "Hazardous", color: "#7e0023" },
+            { band: "No data", color: "#888888" },
+          ].map((b) => (
+            <span key={b.band} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: b.color,
+                  display: "inline-block",
+                  border: "1px solid rgba(0,0,0,0.15)",
+                }}
+              />
+              {b.band}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="section-title" style={{ marginTop: 32 }}>
+        <h3>Bad-air days leaderboard</h3>
+        <span className="muted">Ranked by days over threshold</span>
+      </div>
+
+      <div className="toolbar">
+        <button
+          onClick={() => setWindowDays(30)}
+          disabled={windowDays === 30}
+          className={windowDays === 30 ? "primary" : ""}
+        >
+          Last 30 days
+        </button>
+        <button
+          onClick={() => setWindowDays(90)}
+          disabled={windowDays === 90}
+          className={windowDays === 90 ? "primary" : ""}
+        >
+          Last 90 days
+        </button>
+      </div>
+
+      {leaderboard.isLoading && <p className="muted">Loading summary...</p>}
+      {leaderboard.isError && <p style={{ color: "var(--bad)" }}>Failed to load summary</p>}
 
       {leaderboard.data && (
         <>
-          <h3>Bad-air days leaderboard</h3>
-          <div style={{ width: "100%", height: 280 }}>
+          <div className="card" style={{ height: 280 }}>
             <ResponsiveContainer>
               <BarChart data={top}>
-                <XAxis dataKey="name" hide />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="bad_days" />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--fg-muted)" fontSize={12} />
+                <YAxis stroke="var(--fg-muted)" fontSize={12} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                  }}
+                />
+                <Bar dataKey="bad_days" fill="var(--accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <p style={{ fontSize: 12, opacity: 0.7 }}>
-            Click a row below to see trend
-          </p>
+          <p className="muted" style={{ marginTop: 12 }}>Click a row to see its 90-day trend.</p>
 
-           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th align="left">Location</th>
-                <th align="right">Bad days</th>
-                <th align="right">Max PM2.5</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaderboard.data.map((r) => (
-                <tr
-                  key={r.location_id}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setSelectedId(r.location_id)}
-                >
-                  <td>{r.name}{r.state ? `, ${r.state}` : ""}</td>
-                  <td align="right">{r.bad_days}</td>
-                  <td align="right">{r.max_pm25?.toFixed(1) ?? "—"}</td>
+          <div className="card" style={{ padding: 0, overflow: "hidden", marginTop: 8 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Location</th>
+                  <th style={{ textAlign: "right" }}>Bad days</th>
+                  <th style={{ textAlign: "right" }}>Max PM2.5</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {leaderboard.data.map((r) => (
+                  <tr
+                    key={r.location_id}
+                    style={{
+                      cursor: "pointer",
+                      background: selectedId === r.location_id ? "var(--accent-bg)" : undefined,
+                    }}
+                    onClick={() => setSelectedId(r.location_id)}
+                  >
+                    <td>
+                      <strong>{r.name}</strong>
+                      {r.state ? <span className="muted">, {r.state}</span> : null}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <span className={`badge ${r.bad_days > 5 ? "bad" : r.bad_days > 0 ? "warn" : "good"}`}>
+                        {r.bad_days}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right", fontFamily: "ui-monospace, monospace" }}>
+                      {r.max_pm25?.toFixed(1) ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-{selectedId && trend.data && (
+          {selectedId && trend.data && (
             <>
-              <h3 style={{ marginTop: 16 }}>Bad-air trend (last 90 days)</h3>
-              <div style={{ width: "100%", height: 280 }}>
+              <div className="section-title"><h3>90-day trend</h3></div>
+              <div className="card" style={{ height: 280 }}>
                 <ResponsiveContainer>
                   <LineChart data={trend.data}>
-                    <XAxis dataKey="day" hide />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="bad_day" dot={false} />
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="day" stroke="var(--fg-muted)" fontSize={12} hide />
+                    <YAxis stroke="var(--fg-muted)" fontSize={12} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="pm25_max"
+                      stroke="var(--accent)"
+                      strokeWidth={2}
+                      dot={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

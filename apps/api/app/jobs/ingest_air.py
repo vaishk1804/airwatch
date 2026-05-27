@@ -1,14 +1,13 @@
-from datetime import datetime,timezone
-from sqlalchemy.orm import Session
-from sqlalchemy.dialects.postgresql import insert
+from datetime import UTC, datetime
 
-from app.db.session import engine
-from app.models.location import Location
-from app.models.aq_measurement import AQMeasurement
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from app.clients.openaq_client import fetch_pm25_hourly as fetch_openaq_pm25_hourly
-
 from app.clients.openmeteo_air_client import fetch_pm25_hourly as fetch_openmeteo_pm25_hourly
+from app.db.session import engine
+from app.models.aq_measurement import AQMeasurement
+from app.models.location import Location
 from app.services.openmeteo_air_service import normalize_pm25_hourly
 
 
@@ -31,7 +30,7 @@ async def ingest_pm25_for_all(hours:int =24):
         if not dt_from:
           continue
 
-        ts_dt = datetime.fromisoformat(dt_from.replace("Z", "+00:00")).astimezone(timezone.utc)
+        ts_dt = datetime.fromisoformat(dt_from.replace("Z", "+00:00")).astimezone(UTC)
         rows.append({
         "location_id": loc.id,
         "timestamp_utc": ts_dt,
@@ -66,7 +65,7 @@ async def ingest_pm25_for_all(hours:int =24):
     with Session(engine) as session:
       stmt = insert(AQMeasurement).values(rows)
       stmt=stmt.on_conflict_do_nothing(constraint="uq_aq")
-      result=session.execute(stmt)
+      session.execute(stmt)
       session.commit()
     total+=len(rows)
     by_city.append({"location_id": loc.id, "name": loc.name, "inserted_attempted": len(rows), "source": source_used})

@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.health import router as health_router
 from app.api.admin import router as admin_router
-from app.api.locations import router as locations_router
 from app.api.dashboard import router as dashboard_router
-from app.api.summary import router as summary_router
+from app.api.health import router as health_router
+from app.api.locations import router as locations_router
 from app.api.subscriptions import router as subs_router
-
+from app.api.summary import router as summary_router
 from app.core.config import settings
 
 app = FastAPI(title="AirWatch API", version="0.1.0")

@@ -1,12 +1,14 @@
-from datetime import datetime,timedelta,timezone,date
-from sqlalchemy.orm import Session
-from sqlalchemy import select,func, case
+from datetime import timedelta
+
+from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from app.db.session import engine
-from app.models.location import Location
 from app.models.aq_measurement import AQMeasurement
 from app.models.daily_metrics import DailyMetrics
+from app.models.location import Location
+
 
 def _to_day(dt):
   return dt.date()

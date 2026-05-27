@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import List,Dict,Optional,Tuple
+
 from math import sqrt
 
-def summarize_pm25(pm25: List[dict],bad_threshold: float=35.0)->dict:
+
+def summarize_pm25(pm25: list[dict],bad_threshold: float=35.0)->dict:
   """
   pm25 : [{t,v,unit}]
   """
@@ -32,14 +33,14 @@ def summarize_pm25(pm25: List[dict],bad_threshold: float=35.0)->dict:
     "threshold":float(bad_threshold),
   }
 
-def _pearson(xs:List[float],ys:List[float])-> Optional[float]:
+def _pearson(xs:list[float],ys:list[float])-> float | None:
   n=len(xs)
   if n<3:
     return None
   
   mean_x=sum(xs)/n
   mean_y=sum(ys)/n
-  num=sum((x-mean_x)*(y-mean_y) for x,y in zip(xs,ys))
+  num=sum((x-mean_x)*(y-mean_y) for x,y in zip(xs,ys, strict=True))
   den_x=sqrt(sum((x-mean_x)**2 for x in xs))
   den_y=sqrt(sum((y-mean_y)**2 for y in ys))
   if den_x==0 or den_y ==0:
@@ -47,10 +48,10 @@ def _pearson(xs:List[float],ys:List[float])-> Optional[float]:
   return float(num/(den_x*den_y))
 
 def align_series_by_time(
-    pm25: List[dict],
-    weather: List[dict],
-)-> List[dict]:
-  w_map: Dict[str,dict] = {w["t"]: w for w in weather if w.get("t")}
+    pm25: list[dict],
+    weather: list[dict],
+)-> list[dict]:
+  w_map: dict[str,dict] = {w["t"]: w for w in weather if w.get("t")}
   rows=[]
   for p in pm25:
     t= p.get("t")
@@ -69,9 +70,9 @@ def align_series_by_time(
     })
   return rows
 
-def correlation_insights(rows:List[dict])->dict:
+def correlation_insights(rows:list[dict])->dict:
 
-  def extract(key:str)->Tuple[List[float],List[float]]:
+  def extract(key:str)->tuple[list[float],list[float]]:
     xs,ys=[],[]
     for r in rows:
       pm=r.get("pm25")

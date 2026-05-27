@@ -1,11 +1,12 @@
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from sqlalchemy import select,func
 
 from app.db.session import engine
-from app.models.subscription import Subscription
 from app.models.daily_metrics import DailyMetrics
 from app.models.location import Location
+from app.models.subscription import Subscription
 from app.utils.emailer import send_email
+
 
 def send_alerts(threshold:float = 35.0):
   """

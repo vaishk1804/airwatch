@@ -1,12 +1,14 @@
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
-from sqlalchemy.dialects.postgresql import insert
+from datetime import UTC, datetime
 
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
+
+from app.clients.openmeteo_client import fetch_weather_hourly
 from app.db.session import engine
 from app.models.location import Location
 from app.models.weather_hourly import WeatherHourly
-from app.clients.openmeteo_client import fetch_weather_hourly
 from app.services.weather_service import normalize_weather_hourly
+
 
 async def ingest_weather_for_all(hours:int=24):
   with Session(engine) as session:
@@ -21,7 +23,7 @@ async def ingest_weather_for_all(hours:int=24):
 
     rows=[]
     for p in points:
-      ts_dt=datetime.fromisoformat(p["t"]).astimezone(timezone.utc)
+      ts_dt=datetime.fromisoformat(p["t"]).astimezone(UTC)
       rows.append({
         "location_id":loc.id,
         "timestamp_utc":ts_dt,

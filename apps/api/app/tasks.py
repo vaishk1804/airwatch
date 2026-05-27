@@ -1,6 +1,7 @@
+import asyncio
+
 from app.worker import celery_app
 
-import asyncio
 
 @celery_app.task(name="app.tasks.ingest_air_task",autoretry_for=(Exception,), retry_backoff=True, max_retries=3)
 def ingest_air_task(hours:int = 24):

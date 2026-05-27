@@ -1,7 +1,8 @@
 from fastapi import APIRouter
+
+from app.jobs.aggregate_daily import aggregate_daily_for_all
 from app.jobs.ingest_air import ingest_pm25_for_all
 from app.jobs.ingest_weather import ingest_weather_for_all
-from app.jobs.aggregate_daily import aggregate_daily_for_all
 from app.tasks import send_alerts_task
 
 router = APIRouter(prefix="/admin",tags=["admin"])

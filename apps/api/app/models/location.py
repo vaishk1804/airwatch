@@ -1,7 +1,8 @@
-from sqlalchemy import String, Float
+from sqlalchemy import Float, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
 
 class Location(Base):
   __tablename__="locations"

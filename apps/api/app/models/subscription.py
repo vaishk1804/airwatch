@@ -1,6 +1,8 @@
-from sqlalchemy import ForeignKey,String,Float,Integer,UniqueConstraint
+from sqlalchemy import Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.db.base import Base
+
 
 class Subscription(Base):
   __tablename__ = "subscriptions"

@@ -1,5 +1,6 @@
+from datetime import UTC, datetime, timedelta
+
 import httpx
-from datetime import datetime, timedelta, timezone
 
 from app.core.config import settings
 
@@ -47,7 +48,7 @@ async def fetch_pm25_hourly(lat: float, lon: float, hours: int = 24, radius_km: 
     if not sensor_id:
         return {"results": []}
 
-    dt_from = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+    dt_from = (datetime.now(UTC) - timedelta(hours=hours)).isoformat()
 
     params = {
         "datetime_from": dt_from,

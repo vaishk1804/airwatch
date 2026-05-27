@@ -102,6 +102,25 @@ export async function getBadDaysTrend(locationId:number,days = 90){
   return( await res.json()) as BadDayTrendRow[];
 }
 
+export type MapPoint = {
+  id: number;
+  name: string;
+  state: string | null;
+  country: string;
+  lat: number;
+  lon: number;
+  pm25: number | null;
+  aqi: number | null;
+  band: string;
+  color: string;
+};
+
+export async function getLocationsMap(): Promise<MapPoint[]> {
+  const r = await fetch(`${API}/summary/map`);
+  if (!r.ok) throw new Error(`map: ${r.status}`);
+  return r.json();
+}
+
 export async function subscribe(email:string,location_id:number,threshold:number){
   const res = await fetch(`${API_URL}/subscriptions`,{
     method: "POST",

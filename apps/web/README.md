@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# AirWatch web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript + Vite frontend. See [the root README](../../README.md)
+for the overall project.
 
-Currently, two official plugins are available:
+## Local dev
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+VITE_API_URL=http://localhost:8000 npm run dev
+# → http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+By default the API URL comes from `VITE_API_URL`. Set it in `.env.local`
+for local dev or in your hosting provider for prod.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run typecheck     # tsc -b
+npm run build         # tsc -b && vite build → dist/
+npm run preview       # serve dist/ locally
+```
+
+## Pages
+
+| Route             | What it shows                                                                |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `/`               | Status pills + location table + admin "trigger ingest" button                |
+| `/location/:id`   | PM2.5 + weather time series, KPI tiles, scatter plots for weather correlation |
+| `/summary`        | Bad-air days leaderboard with bar chart and a 90-day trend line              |
+| `/alerts`         | Email subscription form + list                                               |
+
+## Stack
+
+- **React 19** with `@tanstack/react-query` for server state
+- **Recharts** for time series, bar, and scatter visualizations
+- **CSS variables** (in `src/index.css`) with automatic `prefers-color-scheme`
+  dark mode — no Tailwind, no CSS-in-JS runtime
+
+## Project layout
+
+```
+src/
+├── components/   # KPI, PM25Chart, WeatherChart, ScatterPlot
+├── lib/api.ts    # Typed REST client (all fetch calls live here)
+├── pages/        # Route-level components
+├── types/        # Shared TypeScript types
+├── App.tsx       # Shell + routes
+└── main.tsx      # Vite entry, QueryClient + BrowserRouter
 ```

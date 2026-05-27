@@ -1,8 +1,10 @@
-from sqlalchemy import ForeignKey, DateTime, Float, UniqueConstraint, Index
-from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 
+from sqlalchemy import DateTime, Float, ForeignKey, Index, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
 from app.db.base import Base
+
 
 class WeatherHourly(Base):
   __tablename__= "weather_hourly"
